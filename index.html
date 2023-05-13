@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+  <title>Frontend Mentor | IP Address Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+  <main>
+    <div class="top relative flex flex-col gap-5 px-5 py-2 ">
+      <h1 class="text-white text center capitalize font-[500] text-2xl text-center "> IP Address Tracker
+      </h1>
+      <form
+        class="bg-white flex justify-between rounded-lg overflow-hidden min-w-[300px] md:w-[700px] self-center cursor-pointer"
+        onsubmit="getLocale()">
+        <input id="locality" type="text" class="bg-transparent px-3 outline-none w-full placeholder:text-[12px]"
+          placeholder="search for any IP address or domain">
+        <button id="submit-btn" class="bg-black p-4 flex justify-center items-center cursor-pointer" type="submit">
+          <img src="/images/icon-arrow.svg" alt="">
+        </button>
+      </form>
+
+      <div
+        class="absolute top-[250px] left-[50%] w-[85vw] -translate-x-[50%] -translate-y-[50%] mx-2 left-0 z-10 flex flex-col md:flex-row md:justify-around items-center bg-white rounded-lg py-4 md:divide-x md:divide-[var(--Dark-Gray)] md:divide-x-2">
+        <div>
+          <p class="uppercase text-center md:text-left text-[10px] font-[900] text-[var(--Dark-Gray)]">ip address</p>
+          <p id="address" class="font-[500] pb-3 md:pb-0"></p>
+        </div>
+        <div class="md:pl-2">
+          <p class="uppercase text-center md:text-left text-[10px] font-[900] text-[var(--Dark-Gray)]">location</p>
+          <p id="locale" class="font-[500] pb-3 md:pb-0 "></p>
+        </div>
+        <div class="md:pl-2">
+          <p class="uppercase text-center md:text-left text-[10px] font-[900] text-[var(--Dark-Gray)]">timezone</p>
+          <p id="timezone" class="font-[500] pb-3 md:pb-0"></p>
+        </div>
+        <div class="md:pl-2">
+          <p class="uppercase text-center md:text-left text-[10px] font-[900] text-[var(--Dark-Gray)]">isp</p>
+          <p id="isp" class="font-[500] "></p>
+        </div>
+      </div>
+    </div>
+    <div id="map" class=" bottom">
+    </div>
+  </main>
+</body>
+
+
+
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+  integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+<script>
+  let locale = document.getElementById("locale")
+  let address = document.getElementById("address")
+  let isp = document.getElementById("isp")
+  let timezone = document.getElementById("timezone")
+  let locality = document.getElementById("locality")
+  let place = locality.innerText;
+  const form = document.querySelector('form');
+  const submitBtn = document.getElementById('submit-btn');
+
+
+
+
+  async function getLocale(ipAddress) {
+
+    try {
+      const ipResponse = await axios.get('https://api.ipify.org?format=json');
+      const apiKey = 'at_1IKJMamolZiUsZLhQv4TC5jjq1iSY';
+      const ipApiUrl = `https://geo.ipify.org/api/v1?apiKey=${apiKey}&ipAddress=${ipAddress}`;
+      const locationResponse = await axios.get(ipApiUrl);
+      const data = locationResponse.data;
+      console.log(data)
+
+      if (data) {
+        locale.textContent = `${data.location.city}, ${data.location.country} ${data.location.postalCode} `
+        address.textContent = data.ip
+        isp.textContent = data.isp
+        timezone.textContent = data.location.timezone
+      } else {
+        locale.textContent = ""
+        address.textContent = ""
+        isp.textContent = ""
+        timezone.textContent = ""
+      }
+
+      var map = L.map('map').setView([data.location.lat, data.location.lng], 13);
+      // OSM LAYER
+      var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      })
+      osm.addTo(map)
+
+      // MARKER
+      var marker = L.marker([data.location.lat, data.location.lng])
+      marker.addTo(map);
+      var popup = L.popup()
+        .setLatLng([data.location.lat, data.location.lng])
+        .setContent(`${data.location.city}, ${data.location.region}`)
+        .openOn(map)
+
+      marker.on('click', function () {
+        popup.openOn(map);
+      });
+
+    } catch (error) {
+      console.error(error);
+    }
+
+  }
+  submitBtn.addEventListener('click', function (event) {
+    event.preventDefault();
+    const locality = document.getElementById('locality').value;
+    getLocale(place);
+  });
+
+
+  // function generateRandomIP() {
+  //   let ip = [];
+  //   for (let i = 0; i < 4; i++) {
+  //     ip.push(Math.floor(Math.random() * 256));
+  //   }
+  //   return ip.join(".");
+  // }
+  // let ips = [];
+  // for (let i = 0; i < 12; i++) {
+  //   ips.push(generateRandomIP());
+  // }
+  // console.log(ips);
+
+
+
+
+
+
+
+
+</script>
+
+</html>
